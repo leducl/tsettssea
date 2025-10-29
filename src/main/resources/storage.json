@@ -1,0 +1,117 @@
+[ {
+  "title" : "Jawbreakers",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-15T15:04:36.988492"
+}, {
+  "title" : "Le Fabuleux Destin d'Amélie Poulain",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-15T15:05:27.202356500"
+}, {
+  "title" : "\"The Shawshank Redemption\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-15T15:52:15.073868"
+}, {
+  "title" : "Le Choix Illusoire",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-15T15:53:08.932133800"
+}, {
+  "title" : "\"Certainly Three\"",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-15T16:13:18.691849900"
+}, {
+  "title" : "Super Mario Bros. : Le Film",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-15T16:15:48.513633800"
+}, {
+  "title" : "\"The Lighthouse\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T09:59:09.465298100"
+}, {
+  "title" : "Joker",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T09:59:50.283041100"
+}, {
+  "title" : "Le Parrain III",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T10:07:03.925863200"
+}, {
+  "title" : "\"Parasite\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T10:07:26.521939900"
+}, {
+  "title" : "Le Grand Bamboulorus",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T10:07:34.456259100"
+}, {
+  "title" : "\"Le Parrain III\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T11:24:48.804398400"
+}, {
+  "title" : "\"Le Parrain 3\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-16T11:25:05.328386300"
+}, {
+  "title" : "\"Démineur de cœur\"",
+  "status" : "deja_vu",
+  "dateTimeIso" : "2025-10-16T11:25:14.651831900"
+}, {
+  "title" : "Dune",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-17T08:43:46.146053800"
+}, {
+  "title" : "Parasite",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-17T09:06:35.136614900"
+}, {
+  "title" : "\"Pain and Chocolate\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-17T09:06:37.794103700"
+}, {
+  "title" : "\"Hereditary\"",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-17T11:07:36.018757"
+}, {
+  "title" : "Blade Runner 2049",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-17T11:07:56.652481200"
+}, {
+  "title" : "Super Mario Bros. : La Malédiction du Royaumeapproprié",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-17T11:43:04.943685300"
+}, {
+  "title" : "Le Grand Badaud",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-17T11:43:20.064178200"
+}, {
+  "title" : "\"Juno\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-19T22:55:21.166238100"
+}, {
+  "title" : "\"Pain et Roses\"",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-19T22:55:22.461552400"
+}, {
+  "title" : "\"Jojo Rabbit\"",
+  "status" : "envie",
+  "dateTimeIso" : "2025-10-19T22:55:23.952525800"
+}, {
+  "title" : "Nomadland",
+  "status" : "deja_vu",
+  "dateTimeIso" : "2025-10-19T22:55:26.487394800"
+}, {
+  "title" : "Inception",
+  "status" : "liked",
+  "dateTimeIso" : "2025-10-21T22:41:26.598542500"
+}, {
+  "title" : "[Erreur Ollama] null",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-22T11:31:31.242521200"
+}, {
+  "title" : "L'Invention du désert",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-24T09:26:37.216768200"
+}, {
+  "title" : "Jojo Rabbit",
+  "status" : "pas_interesse",
+  "dateTimeIso" : "2025-10-24T10:47:38.180590600"
+} ]

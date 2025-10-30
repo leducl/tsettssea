@@ -52,7 +52,7 @@ public final class JsonStorage {
      * @param title  titre du film
      * @param status statut (ex. "envie", "deja_vu", "pas_interesse")
      */
-    public static synchronized void addOrUpdate(final String title, final String status) {
+    public static void addOrUpdate(final String title, final String status) {
         final List<HistoryEntry> all = loadAll();
         all.removeIf(e -> e.title().equalsIgnoreCase(title));
         all.add(new HistoryEntry(title, status, LocalDateTime.now().toString()));
@@ -64,7 +64,7 @@ public final class JsonStorage {
      *
      * @return liste d’entrées, ou liste vide si absent/illisible
      */
-    public static synchronized List<HistoryEntry> loadAll() {
+    public static List<HistoryEntry> loadAll() {
         final File file = storageFile();
         if (!file.exists()) {
             return new ArrayList<>();
@@ -84,7 +84,7 @@ public final class JsonStorage {
      * @param status statut (ex. "envie")
      * @return liste de titres
      */
-    public static synchronized List<String> getByStatus(final String status) {
+    public static List<String> getByStatus(final String status) {
         return loadAll().stream()
                 .filter(e -> e.status().equalsIgnoreCase(status))
                 .sorted(Comparator.comparing(HistoryEntry::dateTimeIso).reversed())
@@ -98,7 +98,7 @@ public final class JsonStorage {
      *
      * @param all liste à sauvegarder
      */
-    public static synchronized void saveAll(final List<HistoryEntry> all) {
+    public static void saveAll(final List<HistoryEntry> all) {
         final File file = storageFile();
         final File parentDir = file.getParentFile();
         if (parentDir != null && !parentDir.exists()) {

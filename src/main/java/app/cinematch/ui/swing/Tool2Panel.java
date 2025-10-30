@@ -160,6 +160,9 @@ public final class Tool2Panel extends JPanel {
 
     /** Propose la prochaine recommandation et lance la génération de description. */
     private void proposeNext() {
+        title.setText("...");
+        reason.setText("...");
+        platform.setText("L'ia travaille...");
         setBusy(true);
         if (descWorker != null && !descWorker.isDone()) {
             descWorker.cancel(true);
@@ -263,7 +266,6 @@ public final class Tool2Panel extends JPanel {
         likeBtn.setEnabled(!busy);
         nopeBtn.setEnabled(!busy);
         seenBtn.setEnabled(!busy);
-        backBtn.setEnabled(!busy);
     }
 
     /** Définit le contenu HTML de la zone de description. */
@@ -319,15 +321,31 @@ public final class Tool2Panel extends JPanel {
         b.setPreferredSize(new Dimension(220, 56));
     }
 
-    /** Style bouton retour « outlined ». */
+    /** Style bouton retour « outlined » avec effet au survol. */
     private void styleBackOutlined(final JButton b) {
         b.setFocusPainted(false);
         b.setContentAreaFilled(false);
         b.setOpaque(false);
         b.setForeground(new Color(220, 220, 220));
+
         final EmptyBorder pad = new EmptyBorder(6, 12, 6, 12);
         b.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 1, true), pad));
         b.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Effet au survol
+        b.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(final java.awt.event.MouseEvent e) {
+                b.setForeground(Color.WHITE);
+                b.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 2, true), pad));
+            }
+
+            @Override
+            public void mouseExited(final java.awt.event.MouseEvent e) {
+                b.setForeground(new Color(220, 220, 220));
+                b.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 1, true), pad));
+            }
+        });
     }
 
     /** Style labels d’information. */
@@ -336,6 +354,9 @@ public final class Tool2Panel extends JPanel {
         l.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         l.setHorizontalAlignment(SwingConstants.CENTER);
     }
+
+
+
 
     /** Dégradé de fond. */
     @Override

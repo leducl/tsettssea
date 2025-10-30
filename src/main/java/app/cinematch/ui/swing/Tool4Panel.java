@@ -29,7 +29,7 @@ public final class Tool4Panel extends JPanel {
     private final JScrollPane scrollPane = new JScrollPane(conversationPane);
     private final JTextField inputField = new JTextField();
     private final JButton sendButton = new JButton("Envoyer");
-    private final JButton backButton = new JButton("← Retour");
+    private final JButton backButton = new JButton("Retour");
 
     private final JLabel thinkingLabel = new JLabel("🤔 L’IA réfléchit...");
     private final JProgressBar loadingBar = new JProgressBar();
@@ -221,23 +221,29 @@ public final class Tool4Panel extends JPanel {
         });
     }
 
-    /** Style : bouton retour */
-    private void styleBackButton(JButton btn) {
+    /** Style bouton retour */
+    private void styleBackButton(final JButton btn) {
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setOpaque(false);
-        btn.setForeground(Color.LIGHT_GRAY);
-        btn.setBorder(new EmptyBorder(4, 10, 4, 10));
+        btn.setForeground(new Color(220, 220, 220));
+
+        final EmptyBorder pad = new EmptyBorder(6, 12, 6, 12);
+        btn.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 1, true), pad));
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); //  rend le bouton "cliquable"
+
         btn.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseEntered(MouseEvent e) {
+            public void mouseEntered(final MouseEvent e) {
                 btn.setForeground(Color.WHITE);
+                btn.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 2, true), pad));
             }
 
             @Override
-            public void mouseExited(MouseEvent e) {
-                btn.setForeground(Color.LIGHT_GRAY);
+            public void mouseExited(final MouseEvent e) {
+                btn.setForeground(new Color(220, 220, 220));
+                btn.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 1, true), pad));
             }
         });
     }

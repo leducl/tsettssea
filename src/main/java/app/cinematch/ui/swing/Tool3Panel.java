@@ -42,6 +42,9 @@ import javax.swing.border.LineBorder;
  *
  * <p>Le thème visuel reprend le style « néon » utilisé dans le reste de l’UI
  * (bordures composées, couleurs de survol) et un fond en dégradé vertical.</p>
+ *
+ * <p><b>Amélioration :</b> ajout de 3 boutons de filtre pour afficher
+ * les listes par statut : {@code "envie"}, {@code "pas_interesse"}, {@code "deja_vu"}.</p>
  */
 public final class Tool3Panel extends JPanel {
 
@@ -50,7 +53,7 @@ public final class Tool3Panel extends JPanel {
     /** Callback de navigation (ex. {@code "home"}). */
     private final Consumer<String> navigator;
 
-    /** Modèle de données de la liste des envies. */
+    /** Modèle de données de la liste des titres. */
     private final DefaultListModel<String> model = new DefaultListModel<>();
     /** Liste des titres (gauche). */
     private final JList<String> list = new JList<>(model);
@@ -65,6 +68,17 @@ public final class Tool3Panel extends JPanel {
     private final JButton remove = new JButton("Retirer");
     /** Bouton retour. */
     private final JButton backBtn = new JButton("Retour");
+
+    // --- Nouveaux boutons de filtre ---
+    /** Bouton filtre: afficher les films marqués "envie". */
+    private final JButton btnEnvie = new JButton("Envie de voir");
+    /** Bouton filtre: afficher les films marqués "pas_interesse". */
+    private final JButton btnNope = new JButton("Pas intéressé");
+    /** Bouton filtre: afficher les films marqués "deja_vu". */
+    private final JButton btnSeen = new JButton("Déjà vu");
+
+    /** Statut actuellement affiché (filtre courant). */
+    private String currentStatus = "envie";
 
     // --- Thème ---
 
@@ -84,6 +98,8 @@ public final class Tool3Panel extends JPanel {
     private static final Color BG_BOTTOM = new Color(35, 20, 40);
     /** Couleur de texte secondaire. */
     private static final Color TEXT_DIM = new Color(220, 220, 220);
+    /** Taille des boutons */
+    private static final java.awt.Dimension ACTION_BTN_SIZE = new java.awt.Dimension(180, 42);
 
     /**
      * Construit le panneau « Ma liste » et installe l’interface, les styles et les actions.
@@ -101,7 +117,7 @@ public final class Tool3Panel extends JPanel {
         setOpaque(false);
         setBorder(new EmptyBorder(16, 20, 20, 20));
 
-        // --- Barre du haut : retour + actions ---
+        // --- Barre du haut : retour + actions + filtres ---
         final JPanel topBar = new JPanel(new BorderLayout(12, 12));
         topBar.setOpaque(false);
 
@@ -120,8 +136,23 @@ public final class Tool3Panel extends JPanel {
         actions.add(describe);
         actions.add(remove);
 
+        // --- Barre de filtres (nouvelle) ---
+        final JPanel filterPanel = new JPanel();
+        filterPanel.setOpaque(false);
+        styleNeon(btnEnvie);
+        styleNeon(btnNope);
+        styleNeon(btnSeen);
+        filterPanel.add(btnEnvie);
+        filterPanel.add(btnNope);
+        filterPanel.add(btnSeen);
+
+        final JPanel rightContainer = new JPanel(new BorderLayout());
+        rightContainer.setOpaque(false);
+        rightContainer.add(actions, BorderLayout.NORTH);
+        rightContainer.add(filterPanel, BorderLayout.SOUTH);
+
         topBar.add(leftTop, BorderLayout.WEST);
-        topBar.add(actions, BorderLayout.EAST);
+        topBar.add(rightContainer, BorderLayout.EAST);
         add(topBar, BorderLayout.NORTH);
 
         // --- Liste gauche ---
@@ -152,7 +183,7 @@ public final class Tool3Panel extends JPanel {
         add(split, BorderLayout.CENTER);
 
         // --- Actions ---
-        refresh.addActionListener(e -> loadWishlist());
+        refresh.addActionListener(e -> loadByStatus(currentStatus));
         describe.addActionListener(e -> generateForSelection());
         remove.addActionListener(e -> removeSelection());
         list.addListSelectionListener(e -> {
@@ -161,20 +192,40 @@ public final class Tool3Panel extends JPanel {
             }
         });
 
-        // Chargement initial
+        // --- Filtres (nouveau) ---
+        btnEnvie.addActionListener(e -> loadByStatus("envie"));
+        btnNope.addActionListener(e -> loadByStatus("pas_interesse"));
+        btnSeen.addActionListener(e -> loadByStatus("deja_vu"));
+
+        // Chargement initial : garde le comportement d’origine
         loadWishlist();
     }
 
     /**
      * Recharge le modèle de liste à partir du stockage JSON en ne gardant que
      * les titres marqués {@code "envie"}.
+     * <p>
+     * Conserve la compatibilité avec l’API existante en déléguant à
+     * {@link #loadByStatus(String)} avec {@code "envie"}.
+     * </p>
      */
     private void loadWishlist() {
+        loadByStatus("envie");
+    }
+
+    /**
+     * Recharge le modèle de liste à partir du stockage JSON en filtrant par statut.
+     *
+     * @param status statut à afficher ({@code "envie"}, {@code "pas_interesse"}, {@code "deja_vu"})
+     */
+    private void loadByStatus(final String status) {
+        currentStatus = status;
         model.clear();
-        final List<String> envies = JsonStorage.getByStatus("envie");
-        for (String t : envies) {
+        final List<String> items = JsonStorage.getByStatus(status);
+        for (String t : items) {
             model.addElement(stripQuotes(t));
         }
+        setDescHtml("<i>Liste affichée : " + escape(status) + "</i>");
     }
 
     /**
@@ -221,8 +272,8 @@ public final class Tool3Panel extends JPanel {
     }
 
     /**
-     * Retire l’élément sélectionné de la liste d’envies en le marquant
-     * {@code "pas_interesse"}, puis rafraîchit l’affichage.
+     * Retire l’élément sélectionné de la liste en le marquant
+     * {@code "pas_interesse"}, puis rafraîchit l’affichage selon le filtre courant.
      */
     private void removeSelection() {
         final String t = list.getSelectedValue();
@@ -230,7 +281,7 @@ public final class Tool3Panel extends JPanel {
             return;
         }
         JsonStorage.addOrUpdate(t, "pas_interesse");
-        loadWishlist();
+        loadByStatus(currentStatus);
         setDescHtml("<i>Retiré de la liste.</i>");
     }
 
@@ -244,6 +295,9 @@ public final class Tool3Panel extends JPanel {
         describe.setEnabled(!busy);
         remove.setEnabled(!busy);
         list.setEnabled(!busy);
+        btnEnvie.setEnabled(!busy);
+        btnNope.setEnabled(!busy);
+        btnSeen.setEnabled(!busy);
         backBtn.setEnabled(!busy);
     }
 
@@ -283,6 +337,8 @@ public final class Tool3Panel extends JPanel {
             }
         });
         b.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        // Taille uniforme pour tous les boutons d’action
+        b.setPreferredSize(ACTION_BTN_SIZE);
     }
 
     /**

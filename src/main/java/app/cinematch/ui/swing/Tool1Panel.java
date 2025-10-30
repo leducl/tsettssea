@@ -323,7 +323,7 @@ public final class Tool1Panel extends JPanel {
         addWishlist.setEnabled(!busy);
         descBtn.setEnabled(!busy);
         input.setEnabled(!busy);
-        backBtn.setEnabled(!busy);
+
     }
 
     /**

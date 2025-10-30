@@ -1,10 +1,7 @@
 package app.cinematch.agent;
 
 import app.cinematch.api.OllamaClient;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolExecutor;
-import dev.langchain4j.agent.tool.ToolParameters;
-import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.memory.chat.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -94,29 +91,11 @@ public final class ChatAgent {
 
         CineMatchTools tools = new CineMatchTools(this.memory, () -> this.profile);
 
-        List<ToolSpecification> toolSpecifications = List.of(
-                createNoArgTool(
-                        CineMatchTools.RECUPERER_PROFIL,
-                        "Fournit toutes les instructions du profil conversationnel actif."),
-                createNoArgTool(
-                        CineMatchTools.FILMS_DEJA_VUS,
-                        "Liste les films déjà vus par l’utilisateur. Utilise cette information pour éviter les doublons."),
-                createNoArgTool(
-                        CineMatchTools.FILMS_A_REGARDER,
-                        "Liste les films que l’utilisateur souhaite voir bientôt. Privilégie ces envies dans tes réponses."),
-                createNoArgTool(
-                        CineMatchTools.FILMS_REFUSES,
-                        "Liste les films que l’utilisateur ne souhaite pas voir. Ne les recommande jamais.")
-        );
-
-        ToolExecutor toolExecutor = tools::execute;
-
         this.assistant = AiServices.builder(CineMatchAssistant.class)
                 .chatLanguageModel(chatModel)
                 .systemMessage(SYSTEM_PROMPT)
                 .chatMemoryProvider(memoryProvider)
-                .toolSpecifications(toolSpecifications)
-                .toolExecutor(toolExecutor)
+                .tools(tools)
                 .build();
     }
 
@@ -190,23 +169,10 @@ public final class ChatAgent {
         String chat(@MemoryId String memoryId, @UserMessage String userPrompt);
     }
 
-    private static ToolSpecification createNoArgTool(final String name, final String description) {
-        return ToolSpecification.builder()
-                .name(name)
-                .description(description)
-                .parameters(ToolParameters.builder().build())
-                .build();
-    }
-
     /**
      * Outils exposés à l’assistant pour accéder aux préférences persistantes.
      */
     private static final class CineMatchTools {
-
-        private static final String RECUPERER_PROFIL = "recupererProfil";
-        private static final String FILMS_DEJA_VUS = "filmsDejaVus";
-        private static final String FILMS_A_REGARDER = "filmsARegarder";
-        private static final String FILMS_REFUSES = "filmsRefuses";
 
         private final Memory memory;
         private final Supplier<Profile> profileSupplier;
@@ -216,18 +182,8 @@ public final class ChatAgent {
             this.profileSupplier = Objects.requireNonNull(profileSupplier, "profileSupplier");
         }
 
-        private String execute(final ToolExecutionRequest request) {
-            final String name = request.name();
-            return switch (name) {
-                case RECUPERER_PROFIL -> recupererProfil();
-                case FILMS_DEJA_VUS -> filmsDejaVus();
-                case FILMS_A_REGARDER -> filmsARegarder();
-                case FILMS_REFUSES -> filmsRefuses();
-                default -> throw new IllegalArgumentException("Unknown tool: " + name);
-            };
-        }
-
-        private String recupererProfil() {
+        @Tool("Fournit toutes les instructions du profil conversationnel actif.")
+        public String recupererProfil() {
             final Profile current = profileSupplier.get();
             if (current == null) {
                 return "Profil inconnu : répondre en français avec un ton professionnel et concis.";
@@ -242,15 +198,18 @@ public final class ChatAgent {
                     .toString();
         }
 
-        private String filmsDejaVus() {
+        @Tool("Liste les films déjà vus par l’utilisateur. Utilise cette information pour éviter les doublons.")
+        public String filmsDejaVus() {
             return joinList(memory.seen());
         }
 
-        private String filmsARegarder() {
+        @Tool("Liste les films que l’utilisateur souhaite voir bientôt. Privilégie ces envies dans tes réponses.")
+        public String filmsARegarder() {
             return joinList(memory.toWatch());
         }
 
-        private String filmsRefuses() {
+        @Tool("Liste les films que l’utilisateur ne souhaite pas voir. Ne les recommande jamais.")
+        public String filmsRefuses() {
             return joinList(memory.notInterested());
         }
 

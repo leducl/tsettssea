@@ -22,6 +22,12 @@ public final class Tool4Panel extends JPanel {
     private static final Color BG_BOTTOM = new Color(35, 20, 40);
     private static final Color PINK_ACCENT = new Color(255, 64, 160);
 
+    // Zoom aide
+    private static final double HELP_MIN = 0.9;
+    private static final double HELP_MAX = 2.0;
+    private static final double HELP_STEP = 0.1;
+    private static final double HELP_DEFAULT = HELP_MIN; // par défaut = "A-" au max (rendu préféré)
+
     private final Consumer<String> navigator;
     private final Function<String, String> askFn;
 
@@ -31,8 +37,14 @@ public final class Tool4Panel extends JPanel {
     private final JButton sendButton = new JButton("Envoyer");
     private final JButton backButton = new JButton("Retour");
 
+    // Bouton info (aide) — FlatLaf "help" = icône "?"
+    private final JButton infoButton = new JButton();
+
     private final JLabel thinkingLabel = new JLabel("🤔 L’IA réfléchit...");
     private final JProgressBar loadingBar = new JProgressBar();
+
+    // Zoom de l’aide (par défaut comme "A-" au max)
+    private double helpScale = HELP_DEFAULT;
 
     public Tool4Panel(final Function<String, String> askFunction,
                       final Consumer<String> navigationCallback) {
@@ -52,7 +64,7 @@ public final class Tool4Panel extends JPanel {
         setBorder(new EmptyBorder(20, 20, 20, 20));
         setOpaque(false);
 
-        // --- Haut : titre et bouton retour ---
+        // --- Haut : titre, retour, aide ---
         final JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
 
@@ -63,9 +75,29 @@ public final class Tool4Panel extends JPanel {
         title.setForeground(Color.WHITE);
         title.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
+        // Conteneur à droite pour le bouton d’aide
+        final JPanel rightHeader = new JPanel();
+        rightHeader.setOpaque(false);
+
+        // Bouton "help" FlatLaf : icône "?"
+        infoButton.putClientProperty("JButton.buttonType", "help");
+        infoButton.setToolTipText("Aide & commandes (F1) — multi-actions, statuts et exemples");
+        infoButton.setFocusable(false);
+        infoButton.setPreferredSize(new Dimension(40, 40)); // plus grand
+        infoButton.addActionListener(e -> showHelpDialog());
+        rightHeader.add(infoButton);
+
         header.add(backButton, BorderLayout.WEST);
         header.add(title, BorderLayout.CENTER);
+        header.add(rightHeader, BorderLayout.EAST);
         add(header, BorderLayout.NORTH);
+
+        // Raccourci clavier F1 = Aide
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0), "showHelp");
+        getActionMap().put("showHelp", new AbstractAction() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) { showHelpDialog(); }
+        });
 
         // --- Zone de conversation ---
         conversationPane.setEditable(false);
@@ -231,7 +263,7 @@ public final class Tool4Panel extends JPanel {
         final EmptyBorder pad = new EmptyBorder(6, 12, 6, 12);
         btn.setBorder(new CompoundBorder(new LineBorder(Color.WHITE, 1, true), pad));
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); //  rend le bouton "cliquable"
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // cliquable
 
         btn.addMouseListener(new MouseAdapter() {
             @Override
@@ -258,10 +290,179 @@ public final class Tool4Panel extends JPanel {
         g2.dispose();
     }
 
-/** Méthode utilitaire exigée par les tests (compound border). */
+    /** Méthode utilitaire exigée par les tests (compound border). */
     @SuppressWarnings("unused")
     private static CompoundBorder compound(final Color color, final int thickness,
                                            final EmptyBorder pad) {
         return new CompoundBorder(new LineBorder(color, thickness, true), pad);
+    }
+
+    /** Ouvre une fenêtre d’aide compacte avec zoom. */
+    private void showHelpDialog() {
+        final JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Aide — Agent IA",
+                Dialog.ModalityType.MODELESS
+        );
+        dlg.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        final JEditorPane pane = new JEditorPane("text/html", buildHelpHtml(helpScale));
+        pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        pane.setEditable(false);
+        pane.setOpaque(false);
+
+        final JScrollPane scroller = new JScrollPane(pane);
+        scroller.setBorder(new LineBorder(new Color(80, 80, 100), 1, true));
+        scroller.setPreferredSize(new Dimension(860, 600));
+
+        // Barre d’actions: A-, Défaut, A+, Fermer
+        final JButton zoomOut = new JButton("A-");
+        final JButton reset = new JButton("Défaut");
+        final JButton zoomIn = new JButton("A+");
+        final JButton close = new JButton("Fermer");
+        styleNeonButton(zoomOut);
+        styleNeonButton(reset);
+        styleNeonButton(zoomIn);
+        styleNeonButton(close);
+
+        zoomOut.addActionListener(e -> {
+            helpScale = Math.max(HELP_MIN, helpScale - HELP_STEP);
+            pane.setText(buildHelpHtml(helpScale));
+            pane.setCaretPosition(0);
+        });
+        reset.addActionListener(e -> {
+            helpScale = HELP_DEFAULT;
+            pane.setText(buildHelpHtml(helpScale));
+            pane.setCaretPosition(0);
+        });
+        zoomIn.addActionListener(e -> {
+            helpScale = Math.min(HELP_MAX, helpScale + HELP_STEP);
+            pane.setText(buildHelpHtml(helpScale));
+            pane.setCaretPosition(0);
+        });
+        close.addActionListener(e -> dlg.dispose());
+
+        final JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        south.setOpaque(false);
+        south.add(zoomOut);
+        south.add(reset);
+        south.add(zoomIn);
+        south.add(close);
+
+        final JPanel root = new JPanel(new BorderLayout(10, 10));
+        root.setBorder(new EmptyBorder(12, 12, 12, 12));
+        root.setOpaque(false);
+        root.add(scroller, BorderLayout.CENTER);
+        root.add(south, BorderLayout.SOUTH);
+
+        dlg.setContentPane(root);
+        dlg.pack();
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+    /** Contenu HTML de l’aide, avec tailles dépendantes de 'scale' (sans String.format). */
+    private String buildHelpHtml(double scale) {
+        // Calcule des tailles en px selon l’échelle
+        int BODY = (int) Math.round(16 * scale);   // base
+        int H1   = (int) Math.round(26 * scale);
+        int H2   = (int) Math.round(20 * scale);
+        int CODE = (int) Math.round(15 * scale);
+        int HINT = (int) Math.round(14 * scale);
+        int PAD  = (int) Math.round(12 * scale);
+
+        // CSS
+        String css = """
+      <style>
+        body{font-family:'Segoe UI',sans-serif;color:#f5f5f5;background:#1b1b22;}
+        h1{margin:0 0 8px;}
+        h2{margin:16px 0 6px;color:#ffd2ea;}
+        ul{margin:6px 0 10px 22px;}
+        li{margin:6px 0;}
+        code{background:#2a2833;padding:2px 8px;border-radius:8px;display:inline-block;}
+        .hint{color:#ccccdd;}
+        .box{background:#222231;border:1px solid #51425e;border-radius:10px;padding:{PAD}px;}
+        .tags{margin:6px 0 10px 0;}
+        .tag{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:10px;background:#2a2833;border:1px solid #51425e;font-size:90%;}
+      </style>
+    """;
+
+        // HTML
+        String html = """
+      <html><body style="font-size:{BODY}px; line-height:1.55;">
+      <h1 style="font-size:{H1}px;">Que puis-je demander à l’agent IA ?</h1>
+
+      <div class='box'>
+        <h2 style="font-size:{H2}px;">Actions combinées (orchestrateur)</h2>
+        <ul>
+          <li><b>Plusieurs actions en une phrase</b> : <code style="font-size:{CODE}px;">Ajoute Drive à ma liste et supprime Dune de ma liste</code></li>
+          <li><b>Changement de statut en lot</b> : <code style="font-size:{CODE}px;">Mets Alien, Heat, Drive en deja_vu</code></li>
+          <li><b>Mix ajout/retrait</b> : <code style="font-size:{CODE}px;">Ajoute "Blade Runner 2049"; puis supprime Parasite.</code></li>
+        </ul>
+        <div class="tags">
+          <span class="tag">Mots-clefs multi-actions : <i>et</i>, <i>puis</i>, <i>;</i>, <i>.</i></span>
+          <span class="tag">Comprend titres "entre guillemets"</span>
+          <span class="tag">CSV : <i>Alien, Heat, Drive</i></span>
+        </div>
+
+        <h2 style="font-size:{H2}px;">Wishlist (liste d’envie)</h2>
+        <ul>
+          <li><b>Ajouter</b> : <code style="font-size:{CODE}px;">Ajoute "Le Samouraï" à ma wishlist</code></li>
+          <li><b>Retirer</b> : <code style="font-size:{CODE}px;">Enlève Matrix de ma wishlist</code></li>
+          <li><b>Afficher</b> : <code style="font-size:{CODE}px;">Affiche ma liste d’envie</code></li>
+          <li><b>Ajout multiple (instantané)</b> : <code style="font-size:{CODE}px;">Ajoute Alien, Heat, Drive à ma wishlist</code></li>
+        </ul>
+
+        <h2 style="font-size:{H2}px;">Statuts des films</h2>
+        <ul>
+          <li><b>Déjà vu</b> : <code style="font-size:{CODE}px;">J’ai vu Dune, marque-le déjà vu</code></li>
+          <li><b>Pas intéressé</b> : <code style="font-size:{CODE}px;">Je n’aime pas Matrix</code></li>
+          <li><b>Changer statut</b> : <code style="font-size:{CODE}px;">Mets Jojo Rabbit en pas_interesse</code></li>
+          <li><b>En lot</b> : <code style="font-size:{CODE}px;">J'ai déja vu Alien, Heat, Drive</code></li>
+        </ul>
+        <div class="tags">
+          <span class="tag">Statuts valides : <b>envie</b>, <b>deja_vu</b>, <b>pas_interesse</b></span>
+          <span class="tag">Synonymes compris : <i>déjà vu / deja vu</i>, <i>pas intéressé</i></span>
+        </div>
+
+        <h2 style="font-size:{H2}px;">Descriptions & choix</h2>
+        <ul>
+          <li><b>Description courte</b> : <code style="font-size:{CODE}px;">Décris Jojo Rabbit</code></li>
+          <li><b>Prochain à regarder</b> : <code style="font-size:{CODE}px;">Propose-moi le prochain film (au hasard)</code></li>
+        </ul>
+
+        <h2 style="font-size:{H2}px;">Maintenance & tri</h2>
+        <ul>
+          <li><b>Nettoyage</b> : <code style="font-size:{CODE}px;">Nettoie les entrées vides de ma wishlist</code></li>
+          <li><b>Renommer</b> : <code style="font-size:{CODE}px;">Renomme Le seigneur des anneaux en The Lord of the Rings</code></li>
+          <li><b>Tri</b> : <code style="font-size:{CODE}px;">Affiche ma wishlist triée de A à Z</code></li>
+          <li><b>Stats</b> : <code style="font-size:{CODE}px;">Donne les statistiques de mes listes</code></li>
+        </ul>
+
+        <h2 style="font-size:{H2}px;">Astuces</h2>
+        <ul>
+          <li>Après une action, clique <b>Rafraîchir</b> dans l’onglet <i>Ma liste</i> pour voir la mise à jour.</li>
+          <li>Raccourci : touche <b>F1</b> pour rouvrir cette aide.</li>
+          <li>L’orchestrateur comprend les combinaisons naturelles (<i>et</i>, <i>puis</i>, <i>;</i>), les guillemets, et les listes CSV.</li>
+        </ul>
+      </div>
+
+      <p class='hint' style="font-size:{HINT}px;">Tu peux enchaîner : “Recommande 3 films, ajoute le 2e à ma wishlist et décris-le.”</p>
+      </body></html>
+    """;
+
+        // Remplacements
+        return (css + html)
+                .replace("{PAD}",  String.valueOf(PAD))
+                .replace("{BODY}", String.valueOf(BODY))
+                .replace("{H1}",   String.valueOf(H1))
+                .replace("{H2}",   String.valueOf(H2))
+                .replace("{CODE}", String.valueOf(CODE))
+                .replace("{HINT}", String.valueOf(HINT));
+    }
+
+    // (Optionnel) Surcharge no-arg pour appeler buildHelpHtml() sans paramètre
+    @SuppressWarnings("unused")
+    private String buildHelpHtml() {
+        return buildHelpHtml(helpScale);
     }
 }

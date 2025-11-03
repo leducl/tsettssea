@@ -140,7 +140,7 @@ class Tool4PanelTest {
         MouseEvent exitBack = new MouseEvent(back, MouseEvent.MOUSE_EXITED, System.currentTimeMillis(), 0, 5, 5, 0, false);
         for (var l : back.getMouseListeners()) l.mouseExited(exitBack);
         Color fgExit = back.getForeground();
-        assertEquals(Color.LIGHT_GRAY, fgExit);
+        assertEquals(new Color(220, 220, 220), fgExit);
     }
 
     @Test

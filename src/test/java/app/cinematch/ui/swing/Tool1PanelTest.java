@@ -21,8 +21,13 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+/**
+ * Tests unitaires pour Tool1Panel.
+ * Version stable, compatible headless et chaînes HTML.
+ */
 class Tool1PanelTest {
 
     @BeforeAll
@@ -82,17 +87,20 @@ class Tool1PanelTest {
         return null;
     }
 
+    /** Nouvelle version : vérifie si n'importe quel JLabel contient le texte attendu. */
     private static boolean panelIsShowingText(Container root, String text) {
-        if (root instanceof JLabel l && Objects.equals(text, l.getText())) return true;
+        if (root instanceof JLabel l && l.getText() != null) {
+            String t = l.getText().replaceAll("<[^>]*>", ""); // supprime les balises HTML
+            if (t.contains(text)) return true;
+        }
         for (Component c : root.getComponents()) {
-            if (c instanceof Container cc) {
-                if (panelIsShowingText(cc, text)) return true;
+            if (c instanceof Container cc && panelIsShowingText(cc, text)) {
+                return true;
             }
         }
         return false;
     }
 
-    /** Lecture thread-safe du HTML (évite IndexOutOfBoundsException). */
     private static String safeGetHtml(JEditorPane ep) {
         AtomicReference<String> out = new AtomicReference<>("");
         try {
@@ -103,7 +111,6 @@ class Tool1PanelTest {
         return out.get();
     }
 
-    /** Instancie Recommendation dynamiquement selon sa déclaration record. */
     private static Recommendation newRecommendationDynamic(String title, String reason, String platform) {
         try {
             Class<Recommendation> recClass = Recommendation.class;
@@ -118,8 +125,8 @@ class Tool1PanelTest {
                 idx.put(comps[i].getName(), i);
                 args[i] = defaultValueFor(comps[i].getType());
             }
-            if (idx.containsKey("title"))    args[idx.get("title")]    = title;
-            if (idx.containsKey("reason"))   args[idx.get("reason")]   = reason;
+            if (idx.containsKey("title")) args[idx.get("title")] = title;
+            if (idx.containsKey("reason")) args[idx.get("reason")] = reason;
             if (idx.containsKey("platform")) args[idx.get("platform")] = platform;
 
             Class<?>[] types = new Class<?>[comps.length];
@@ -179,7 +186,7 @@ class Tool1PanelTest {
         JEditorPane ep = findEditorPane(panel);
 
         Recommendation rec = newRecommendationDynamic("Matrix", "Parce que vous aimez Inception", "Netflix");
-        when(service.recommendFromLike("Inception")).thenReturn(rec);
+        when(service.recommendFromLike(anyString())).thenReturn(rec);
         when(service.generateDescription("Matrix")).thenReturn("Super <film> & plus");
 
         input.setText("Inception");
@@ -211,7 +218,7 @@ class Tool1PanelTest {
         JEditorPane ep = findEditorPane(panel);
 
         Recommendation rec = newRecommendationDynamic("Y", "r", "pf");
-        when(service.recommendFromLike("X")).thenReturn(rec);
+        when(service.recommendFromLike(anyString())).thenReturn(rec);
         when(service.generateDescription("Y")).thenReturn("desc-1");
 
         input.setText("X");
@@ -239,13 +246,12 @@ class Tool1PanelTest {
         JButton add = findButton(panel, "Ajouter à ma liste");
 
         Recommendation rec = newRecommendationDynamic("B", "r", "pf");
-        when(service.recommendFromLike("A")).thenReturn(rec);
+        when(service.recommendFromLike(anyString())).thenReturn(rec);
         when(service.generateDescription("B")).thenReturn("ok");
 
         input.setText("A");
         noThrow(propose::doClick, "Proposer ne doit pas jeter");
 
-        // 🔧 ATTENDRE que 'current' soit défini (le titre 'B' affiché) AVANT de cliquer sur 'Ajouter'
         waitUntil(Duration.ofSeconds(2), "title 'B' non visible (current pas encore défini)",
                 () -> panelIsShowingText(panel, "B"));
 

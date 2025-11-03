@@ -214,19 +214,52 @@ public final class Tool3Panel extends JPanel {
     }
 
     /**
-     * Recharge le modèle de liste à partir du stockage JSON en filtrant par statut.
+     * Recharge le modèle de liste à partir du stockage JSON en filtrant par statut
+     * et préserve/rétablit une sélection utile pour les actions suivantes.
      *
-     * @param status statut à afficher ({@code "envie"}, {@code "pas_interesse"}, {@code "deja_vu"})
+     * @param status statut à afficher ("envie", "pas_interesse", "deja_vu")
      */
     private void loadByStatus(final String status) {
         currentStatus = status;
+
+        // Mémorise la sélection courante pour la restaurer si possible
+        final String previouslySelected = list.getSelectedValue();
+
         model.clear();
         final List<String> items = JsonStorage.getByStatus(status);
         for (String t : items) {
-            model.addElement(stripQuotes(t));
+            String cleaned = stripQuotes(t).trim();
+            if (!cleaned.isEmpty()) {                 // <-- évite la case vide
+                model.addElement(cleaned);
+            }
         }
+
+
+        // Restaure la sélection si l’élément est encore présent ; sinon, sélectionne le 1er
+        if (previouslySelected != null) {
+            int idx = -1;
+            for (int i = 0; i < model.size(); i++) {
+                if (previouslySelected.equals(model.get(i))) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx >= 0) {
+                list.setSelectedIndex(idx);
+            } else if (!model.isEmpty()) {
+                list.setSelectedIndex(0);
+            } else {
+                list.clearSelection();
+            }
+        } else if (!model.isEmpty()) {
+            list.setSelectedIndex(0);
+        } else {
+            list.clearSelection();
+        }
+
         setDescHtml("<i>Liste affichée : " + escape(status) + "</i>");
     }
+
 
     /**
      * Supprime les guillemets typographiques et ASCII du texte fourni.

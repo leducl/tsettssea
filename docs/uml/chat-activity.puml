@@ -1,0 +1,20 @@
+@startuml
+start
+:Recevoir userPrompt;
+if (askDelegate != null?) then (oui)
+  :convMemory.addUserMessage(userPrompt);
+  :response = askDelegate.apply(userPrompt);
+  :convMemory.addAssistantMessage(response);
+  stop
+else (non)
+  :convMemory.addUserMessage(userPrompt);
+  :seen = memory.seen();
+  :wishlist = memory.toWatch();
+  :disliked = memory.notInterested();
+  :Construire prompt système avec listes et historique;
+  :response = ollama.chat(systemPrompt, userPrompt);
+  :convMemory.addAssistantMessage(response);
+  :return response;
+  stop
+endif
+@enduml

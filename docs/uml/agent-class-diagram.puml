@@ -1,0 +1,88 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "app.cinematch.agent" {
+  class ChatAgent {
+    -OllamaClient ollama
+    -Profile profile
+    -Memory memory
+    -ConversationMemory convMemory
+    -Function<String,String> askDelegate
+    +ChatAgent(ollama, profile, ignored)
+    +ChatAgent(ollama, profile, ignored, askDelegate)
+    +setProfile(profile)
+    +ask(userPrompt)
+    +getMemory()
+    +getProfile()
+  }
+
+  class Memory {
+    +addSeen(title)
+    +addToWatch(title)
+    +addNotInterested(title)
+    +seen() : List<String>
+    +toWatch() : List<String>
+    +notInterested() : List<String>
+    +history() : List<HistoryEntry>
+  }
+
+  class ConversationMemory {
+    -LinkedList<Message> history
+    -int maxMessages
+    +ConversationMemory(maxMessages)
+    +addUserMessage(content)
+    +addAssistantMessage(content)
+    +toPromptString() : String
+  }
+
+  record Profile {
+    +name() : String
+    +systemPrompt() : String
+    +language() : String
+    +constraints() : String
+    +defaultCinemaExpert() : Profile
+    +humoristicCritic() : Profile
+  }
+}
+
+package "app.cinematch.api" {
+  class OllamaClient {
+    +chat(system, user) : String
+  }
+}
+
+package "app.cinematch.util" {
+  class JsonStorage
+}
+
+package "app.cinematch.agent.langchain" {
+  class LangChain4jAgentBridge {
+    -CineAssistant assistant
+    -Profile profile
+    -BulkTools bulkTools
+    +LangChain4jAgentBridge(url, model, profile, service)
+    +ask(userPrompt) : String
+  }
+
+  interface CineAssistant {
+    +chat(userMessage) : String
+  }
+}
+
+package "app.cinematch" {
+  class MovieRecommenderService
+}
+
+ChatAgent --> OllamaClient : utilise
+ChatAgent o--> Memory : instancie
+ChatAgent o--> ConversationMemory : instancie
+ChatAgent --> Profile : dépend
+ChatAgent ..> LangChain4jAgentBridge : délègue ask()
+LangChain4jAgentBridge --> Profile
+LangChain4jAgentBridge --> MovieRecommenderService
+LangChain4jAgentBridge --> CineAssistant
+Memory --> JsonStorage
+MovieRecommenderService --> OllamaClient
+MovieRecommenderService --> JsonStorage
+
+@enduml

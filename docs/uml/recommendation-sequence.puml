@@ -1,0 +1,25 @@
+@startuml
+actor Utilisateur
+participant "MainFrame\nTool1Panel" as UI
+participant "MovieRecommenderService" as Service
+participant "OllamaClient" as Client
+participant "LLM Ollama" as LLM
+
+Utilisateur -> UI : saisir film apprécié
+UI -> Service : recommendFromLike(likedTitle)
+activate Service
+Service -> Service : Construire prompts system/user
+Service -> Client : chat(system, user)
+activate Client
+Client -> LLM : POST /api/generate
+activate LLM
+LLM --> Client : JSON ou texte brut
+deactivate LLM
+Client --> Service : réponse texte
+deactivate Client
+Service -> Service : parse(raw)
+Service -> Service : fallback titre/pitch/platform
+Service --> UI : Recommendation(title, reason, platform)
+deactivate Service
+UI --> Utilisateur : Affiche recommandation enrichie
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+state "MainFrame" as MainFrame {
+  [*] --> Home
+  Home --> Tool1 : Sélection "Film similaire"
+  Home --> Tool2 : Sélection "Swipe"
+  Home --> Tool3 : Sélection "Ma liste"
+  Home --> Chat : Sélection "Chat IA"
+  Home --> History : Sélection "Historique"
+
+  Tool1 --> Home : Retour via Consumer<String>
+  Tool2 --> Home : Retour via Consumer<String>
+  Tool3 --> Home : Retour via Consumer<String>
+  Chat --> Home : showCard("home")
+  History --> Home : Navigation CardLayout
+}
+@enduml

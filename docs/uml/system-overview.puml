@@ -1,0 +1,30 @@
+@startuml
+!include <C4/C4_Component>
+
+LAYOUT_WITH_LEGEND()
+
+Person(user, "Utilisateur", "Cinéphile qui consulte et discute")
+
+System_Boundary(app, "Application CineMatch") {
+  Container(ui, "MainFrame Swing", "Java/Swing", "Interface multi-écrans")
+  Container(agent, "ChatAgent", "Java", "Orchestration des réponses IA")
+  Container_Ext(bridge, "LangChain4jAgentBridge", "Java", "Délégation vers l'agent LangChain4j")
+  Container(service, "MovieRecommenderService", "Java", "Prompts et parsing des recommandations")
+  Container(storage, "JsonStorage", "Fichier JSON", "Persistance des films et statuts")
+  Container(api, "OllamaClient", "Java", "Client HTTP pour interroger l'API Ollama")
+}
+
+System_Ext(llm, "Ollama LLM", "Modèle qwen2.5 ou équivalent")
+
+Rel(user, ui, "Navigue, lance des recommandations, discute")
+Rel(ui, service, "Demande des suggestions" )
+Rel(ui, agent, "Envoie les messages de chat")
+Rel(agent, bridge, "Délègue ask() si disponible")
+Rel(agent, api, "Fallback chat()", "Prompts formatés")
+Rel(agent, storage, "Consultation mémoire (seen/toWatch)" )
+Rel(service, api, "chat(system, user)")
+Rel(service, storage, "addOrUpdate / loadAll")
+Rel(api, llm, "Requêtes HTTP /api/generate")
+Rel_Back(llm, api, "Réponses JSON ou texte")
+
+@enduml
